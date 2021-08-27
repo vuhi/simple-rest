@@ -1,0 +1,61 @@
+version: "3.8"
+
+services:
+  oracle-db:
+    build: .
+    image: oracle/database:18.4.0-xe
+    container_name: oracle-db
+    environment:
+      - ORACLE_PWD=password
+      - ORACLE_CHARACTERSET=AL32UTF8
+    ports:
+      - "1521:1521"
+      - "5500:5500"
+    volumes:
+      - oracle_db_volume:/opt/oracle/oradata
+    networks:
+      sample_rest_network:
+
+  simple-rest-1:
+    image: simple-rest:latest
+    restart: always
+    container_name: simple-rest-1
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8080:8080"
+    environment:
+      - CONNECT_STRING=jdbc:oracle:thin:@oracle-db:1521:xe
+      - SERVICE_NAME=Simple-Rest-1;Simple-Rest-1-Dev;All-Simple-Rest
+      - SERVICE_PORT=8080
+      - SERVICE_ENVIRONMENT=dev
+    depends_on:
+      - oracle-db
+    networks:
+      sample_rest_network:
+
+  simple-rest-2:
+    image: simple-rest:latest
+    restart: always
+    container_name: simple-rest-2
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8081:8080"
+    environment:
+      - CONNECT_STRING=jdbc:oracle:thin:@oracle-db:1521:xe
+      - SERVICE_NAME=Simple-Rest-2;Simple-Rest-2-Dev;All-Simple-Rest
+      - SERVICE_PORT=8081
+      - SERVICE_ENVIRONMENT=dev
+    depends_on:
+      - oracle-db
+    networks:
+      sample_rest_network:
+
+networks:
+  sample_rest_network:
+    driver: bridge
+volumes:
+  oracle_db_volume:
